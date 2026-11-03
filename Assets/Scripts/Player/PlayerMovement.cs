@@ -11,8 +11,20 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("The Move action from InputSystem_Actions (Player/Move). It gives a Vector2: x = left/right, y = forward/back.")]
     [SerializeField] private InputActionReference moveAction;
 
+    [Tooltip("The Jump action from InputSystem_Actions (Player/Jump), bound to Space.")]
+    [SerializeField] private InputActionReference jumpAction;
+
+    [Tooltip("The Sprint action from InputSystem_Actions (Player/Sprint), bound to Left Shift.")]
+    [SerializeField] private InputActionReference sprintAction;
+
     [Tooltip("Walking speed in meters per second (1 Unity unit = 1 meter).")]
     [SerializeField] private float moveSpeed = 4f;
+
+    [Tooltip("Speed in meters per second while holding Sprint.")]
+    [SerializeField] private float sprintSpeed = 7f;
+
+    [Tooltip("How high a jump goes, in meters. The capsule is 2 m tall, so 1.2 clears a waist-high box.")]
+    [SerializeField] private float jumpHeight = 1.2f;
 
     [Tooltip("Downward acceleration in meters per second squared. Real gravity is -9.81; games often use more so falling feels snappy.")]
     [SerializeField] private float gravity = -20f;
@@ -33,11 +45,15 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable()
     {
         moveAction.action.Enable();
+        jumpAction.action.Enable();
+        sprintAction.action.Enable();
     }
 
     private void OnDisable()
     {
         moveAction.action.Disable();
+        jumpAction.action.Disable();
+        sprintAction.action.Disable();
     }
 
     // Update runs once per rendered frame. We use it (not FixedUpdate) because
@@ -56,9 +72,21 @@ public class PlayerMovement : MonoBehaviour
         {
             verticalVelocity = -2f;
         }
+
+        // Only jump when standing on something, otherwise you could jump forever in mid-air.
+        // WasPressedThisFrame fires once per key press, so holding Space doesn't bunny-hop.
+        if (controller.isGrounded && jumpAction.action.WasPressedThisFrame())
+        {
+            // Physics formula: the upward speed needed to reach jumpHeight under this gravity.
+            // Tuning height in meters is easier to reason about than tuning a raw launch speed.
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
         verticalVelocity += gravity * Time.deltaTime;
 
-        Vector3 velocity = direction * moveSpeed;
+        // IsPressed is true every frame the key is held, unlike WasPressedThisFrame.
+        float speed = sprintAction.action.IsPressed() ? sprintSpeed : moveSpeed;
+
+        Vector3 velocity = direction * speed;
         velocity.y = verticalVelocity;
 
         // Multiply by Time.deltaTime so speed is "per second" instead of "per frame";
