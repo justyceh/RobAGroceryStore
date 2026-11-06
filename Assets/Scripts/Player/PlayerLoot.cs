@@ -14,12 +14,18 @@ public class PlayerLoot : MonoBehaviour
     // "LootChanged += MyMethod", like addEventListener. PlayerLoot doesn't need to know who's listening.
     public event Action<int> LootChanged;
 
+    // Fired at the moment of a theft, so guards can check whether they saw it.
+    // Separate from LootChanged because the count will later change for other reasons too
+    // (using or dropping items), and those shouldn't count as stealing.
+    public event Action ItemStolen;
+
     public void AddLoot()
     {
         LootCount++;
         Debug.Log($"Stole an item! Loot: {LootCount}");
 
-        // "?." only calls Invoke if at least one script has subscribed, otherwise LootChanged is null.
+        // "?." only calls Invoke if at least one script has subscribed, otherwise the event is null.
         LootChanged?.Invoke(LootCount);
+        ItemStolen?.Invoke();
     }
 }
