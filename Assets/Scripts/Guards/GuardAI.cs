@@ -158,17 +158,20 @@ public class GuardAI : MonoBehaviour
             // This guard is a witness: the player is now Wanted, and this guard reacts right away.
             playerWanted.MakeWanted();
             StartChase();
-            RadioOtherGuards(player.position);
+            RadioGuards(transform.position, radioRange, player.position, this);
         }
     }
 
-    private void RadioOtherGuards(Vector3 theftPosition)
+    // Sends every guard within range of "from" to search "searchPoint". Static so anything can
+    // call in an alert, not just guards: security cameras use GuardAI.RadioGuards(...) too.
+    // "sender" is skipped so a guard doesn't radio itself (cameras pass null).
+    public static void RadioGuards(Vector3 from, float range, Vector3 searchPoint, GuardAI sender)
     {
         foreach (GuardAI guard in allGuards)
         {
-            if (guard != this && Vector3.Distance(transform.position, guard.transform.position) <= radioRange)
+            if (guard != sender && Vector3.Distance(from, guard.transform.position) <= range)
             {
-                guard.HearRadio(theftPosition);
+                guard.HearRadio(searchPoint);
             }
         }
     }
