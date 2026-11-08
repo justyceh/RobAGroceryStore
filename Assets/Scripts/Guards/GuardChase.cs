@@ -8,9 +8,6 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class GuardChase : MonoBehaviour
 {
-    [Tooltip("What the guard chases. Drag the Player from the Hierarchy here.")]
-    [SerializeField] private Transform target;
-
     [Tooltip("Seconds between path updates. Recalculating every frame is wasteful; a few times per second looks the same.")]
     [SerializeField] private float repathInterval = 0.2f;
 
@@ -20,9 +17,18 @@ public class GuardChase : MonoBehaviour
     private NavMeshAgent agent;
     private float repathTimer;
 
+    // What the guard chases. GuardAI hands this over in its Awake, so every guard copy
+    // works without dragging the Player into it.
+    private Transform target;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
+    }
+
+    public void Init(Transform player)
+    {
+        target = player;
     }
 
     private void OnEnable()

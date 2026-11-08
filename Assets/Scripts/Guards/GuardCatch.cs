@@ -5,14 +5,18 @@ using UnityEngine;
 // (e.g. a stunned guard might stop chasing but a later feature could still let it catch).
 public class GuardCatch : MonoBehaviour
 {
-    [Tooltip("The player to catch. Drag the Player from the Hierarchy here.")]
-    [SerializeField] private Transform target;
-
-    [Tooltip("The GameManager in the scene. Drag the GameManager object here.")]
-    [SerializeField] private GameManager gameManager;
-
     [Tooltip("Distance between the guard's and player's centers that counts as caught, in meters. The two capsules touch at 1.0.")]
     [SerializeField] private float catchDistance = 1.3f;
+
+    // GuardAI hands these over in its Awake, so every guard copy works without dragging references in.
+    private Transform target;
+    private GameManager gameManager;
+
+    public void Init(Transform player, GameManager manager)
+    {
+        target = player;
+        gameManager = manager;
+    }
 
     private void Update()
     {
