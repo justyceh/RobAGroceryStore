@@ -1,17 +1,11 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-// Makes the guard stroll between random points inside a rectangular area (the store),
+// Makes the guard stroll between random points inside the level's WanderArea,
 // pausing for a moment at each one. GuardAI switches this on and off.
 [RequireComponent(typeof(NavMeshAgent))]
 public class GuardWander : MonoBehaviour
 {
-    [Tooltip("Center of the area the guard wanders in, in world space. Shown as a yellow box in the Scene view when the guard is selected.")]
-    [SerializeField] private Vector3 areaCenter = new Vector3(0f, 0f, 0f);
-
-    [Tooltip("Width (X) and depth (Z) of the wander area in meters. Y is ignored. The store's inside is about 29 x 19.")]
-    [SerializeField] private Vector3 areaSize = new Vector3(28f, 0f, 18f);
-
     [Tooltip("Walking speed while wandering, in meters per second. Slower than chasing so it reads as a calm patrol.")]
     [SerializeField] private float wanderSpeed = 2f;
 
@@ -22,11 +16,20 @@ public class GuardWander : MonoBehaviour
     [SerializeField] private float maxWaitTime = 3f;
 
     private NavMeshAgent agent;
+    private WanderArea area;
     private float waitTimer;
 
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        // The level owns the wander area, so a guard prefab works in any level without retyping sizes.
+        // Looked up once here, never in Update.
+        area = FindAnyObjectByType<WanderArea>();
+        if (area == null)
+        {
+            Debug.LogError("GuardWander: this level has no WanderArea. Create an empty object and add the WanderArea component.");
+        }
     }
 
     private void OnEnable()
@@ -69,7 +72,7 @@ public class GuardWander : MonoBehaviour
 
     private void PickNewDestination()
     {
-        if (!agent.isOnNavMesh)
+        if (area == null || !agent.isOnNavMesh)
         {
             return;
         }
@@ -78,24 +81,11 @@ public class GuardWander : MonoBehaviour
         // the nearest walkable spot within 1.5 m of the point, or fails if there isn't one.
         for (int attempt = 0; attempt < 10; attempt++)
         {
-            Vector3 randomPoint = areaCenter + new Vector3(
-                Random.Range(-areaSize.x / 2f, areaSize.x / 2f),
-                0f,
-                Random.Range(-areaSize.z / 2f, areaSize.z / 2f));
-
-            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(area.GetRandomPoint(), out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
             {
                 agent.SetDestination(hit.position);
                 return;
             }
         }
-    }
-
-    // Editor-only drawing: shows the wander area as a yellow box when the guard is selected.
-    // It never appears in the game itself.
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(areaCenter, new Vector3(areaSize.x, 0.1f, areaSize.z));
     }
 }

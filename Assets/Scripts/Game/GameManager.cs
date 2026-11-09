@@ -4,7 +4,8 @@ using UnityEngine.SceneManagement;
 
 // Decides when the game is over. Other scripts report what happened (GuardCatch calls
 // PlayerCaught, ExitZone calls PlayerEscaped) and this script freezes the game,
-// shows the result, and restarts when the Play Again button is clicked.
+// shows the result, and restarts or moves on when a button is clicked.
+// Levels are separate scenes; their order is the scene list in File > Build Profiles.
 public class GameManager : MonoBehaviour
 {
     [Tooltip("The panel shown when the game ends. It's hidden automatically when the game starts.")]
@@ -12,6 +13,9 @@ public class GameManager : MonoBehaviour
 
     [Tooltip("The text on the panel that says whether you won or lost.")]
     [SerializeField] private TMP_Text resultText;
+
+    [Tooltip("The Next Level button on the panel. Only shown after a win, and only if another level comes after this one in Build Profiles.")]
+    [SerializeField] private GameObject nextLevelButton;
 
     [Tooltip("The Player. All of its scripts are switched off when the game ends so you can't keep playing behind the message.")]
     [SerializeField] private GameObject player;
@@ -34,15 +38,15 @@ public class GameManager : MonoBehaviour
 
     public void PlayerCaught()
     {
-        EndGame(loseMessage);
+        EndGame(loseMessage, false);
     }
 
     public void PlayerEscaped(int lootCount)
     {
-        EndGame(string.Format(winMessage, lootCount));
+        EndGame(string.Format(winMessage, lootCount), true);
     }
 
-    private void EndGame(string message)
+    private void EndGame(string message, bool won)
     {
         // A guard keeps "catching" you every frame while touching you, so only end the game once.
         if (IsGameOver)
@@ -64,7 +68,21 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
 
         resultText.text = message;
+        nextLevelButton.SetActive(won && HasNextLevel());
         gameOverPanel.SetActive(true);
+    }
+
+    private bool HasNextLevel()
+    {
+        // buildIndex is this scene's position in the Build Profiles list (0 = first).
+        return SceneManager.GetActiveScene().buildIndex + 1 < SceneManager.sceneCountInBuildSettings;
+    }
+
+    // Called by the Next Level button's On Click event.
+    public void LoadNextLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
     // Called by the Play Again button's On Click event (set up in the Inspector, not in code).
