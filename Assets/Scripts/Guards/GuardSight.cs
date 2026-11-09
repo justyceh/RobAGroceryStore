@@ -51,8 +51,14 @@ public class GuardSight : MonoBehaviour
         }
 
         // 3. Line of sight: if the line from the eyes to the player hits a wall or shelf, the player is hidden.
-        bool blocked = Physics.Linecast(eyes, target.position, obstacleLayers, QueryTriggerInteraction.Ignore);
-        return !blocked;
+        if (Physics.Linecast(eyes, target.position, out RaycastHit hit, obstacleLayers, QueryTriggerInteraction.Ignore))
+        {
+            // Character models often come with their own colliders (hat, belt...). If the first thing
+            // the line hits is part of the player, nothing is in the way, so the player is visible.
+            // IsChildOf is also true for the player object itself.
+            return hit.transform.IsChildOf(target);
+        }
+        return true;
     }
 
     // Editor-only: draws the cone's two edges in cyan when the guard is selected.

@@ -1,25 +1,33 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // Holds everything that should survive loading a new level, and loads/saves it to disk.
 // Normally every object is destroyed when a scene loads (like a full page refresh wiping
 // React state). DontDestroyOnLoad moves this object into a special scene that never unloads.
 //
-// It lives in the Core prefab, so every level has one. The first one to wake up becomes the
-// real session; the copies in later levels see that one already exists and delete themselves.
-// Other scripts reach it with GameSession.Instance (a "singleton": exactly one, global).
+// Every scene has one (inside Core in levels, on its own in the menu). The first one to wake
+// up becomes the real session; copies in later scenes see that one already exists and delete
+// themselves. Other scripts reach it with GameSession.Instance (a "singleton": exactly one, global).
 public class GameSession : MonoBehaviour
 {
-    [Tooltip("How many items the backpack can hold.")]
-    [SerializeField] private int backpackSize = 8;
+    [Tooltip("How many slots the hotbar (the bar at the bottom of the screen) has.")]
+    [SerializeField] private int hotbarSize = 8;
+
+    [Tooltip("How many slots the backpack (the extra storage opened with Tab) has.")]
+    [SerializeField] private int backpackSize = 16;
 
     [Tooltip("The ItemDatabase asset listing every item, used to turn saved item IDs back into items.")]
     [SerializeField] private ItemDatabase itemDatabase;
 
     public static GameSession Instance { get; private set; }
 
-    public Backpack Backpack { get; private set; }
+    // The 8 slots you carry and use during a level.
+    public Inventory Hotbar { get; private set; }
 
-    // Money earned at the shop. Saved with the backpack; the shop will change it.
+    // Extra storage. Items here can be carried and sold, but must be moved to the hotbar to be used.
+    public Inventory Backpack { get; private set; }
+
+    // Money earned at the shop. Saved with the items; the shop will change it.
     public int Money { get; private set; }
 
     // Awake runs before any Start, so scripts should use GameSession.Instance from Start onward, not Awake.
@@ -27,16 +35,17 @@ public class GameSession : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            // A session already exists from an earlier level. Keep that one and its backpack.
+            // A session already exists from an earlier scene. Keep that one and its items.
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
-        Backpack = new Backpack(backpackSize);
+        Hotbar = new Inventory(hotbarSize);
+        Backpack = new Inventory(backpackSize);
         LoadGame();
 
-        // DontDestroyOnLoad only works on top-level objects, so detach from the Core parent first.
+        // DontDestroyOnLoad only works on top-level objects, so detach from any parent first.
         transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
     }
@@ -49,16 +58,14 @@ public class GameSession : MonoBehaviour
         }
     }
 
-    // Saving only happens at safe moments (after escaping a level), never mid-level.
+    // Saving only happens at safe moments (when a level ends), never mid-level.
     // Otherwise you could steal, quit before getting caught, and keep the loot.
     public void SaveGame()
     {
         SaveData data = new SaveData();
         data.money = Money;
-        foreach (ItemData item in Backpack.Items)
-        {
-            data.backpackItemIds.Add(item.Id);
-        }
+        WriteSlots(Hotbar, data.hotbar);
+        WriteSlots(Backpack, data.backpack);
 
         SaveSystem.Save(data);
         Debug.Log($"Game saved to {SaveSystem.SavePath}");
@@ -69,7 +76,7 @@ public class GameSession : MonoBehaviour
         SaveData data = SaveSystem.Load();
         if (data == null)
         {
-            Debug.Log("No save file yet, starting with an empty backpack.");
+            Debug.Log("No save file yet, starting with empty pockets.");
             return;
         }
 
@@ -80,23 +87,58 @@ public class GameSession : MonoBehaviour
         }
 
         Money = data.money;
+        ReadSlots(data.hotbar, Hotbar);
+        ReadSlots(data.backpack, Backpack);
+
+        // Old format from before stacking: just a list of item IDs. Add them one by one so they stack.
         foreach (string id in data.backpackItemIds)
         {
-            ItemData item = itemDatabase.FindById(id);
-            if (item == null)
+            ItemData item = FindItem(id);
+            if (item != null && !Hotbar.TryAdd(item) && !Backpack.TryAdd(item))
             {
-                // E.g. the item asset was renamed or removed from the database.
-                Debug.LogWarning($"Saved item '{id}' isn't in the Item Database, skipping it.");
-                continue;
-            }
-            if (!Backpack.TryAdd(item))
-            {
-                Debug.LogWarning("Saved backpack has more items than fit, the rest were dropped.");
+                Debug.LogWarning("Saved items don't all fit, the rest were dropped.");
                 break;
             }
         }
 
-        Debug.Log($"Loaded save: {Backpack.Items.Count} items, ${Money}.");
+        Debug.Log($"Loaded save: {Hotbar.TotalItemCount + Backpack.TotalItemCount} items, ${Money}.");
+    }
+
+    // Copies every non-empty slot of an inventory into the save list.
+    private static void WriteSlots(Inventory inventory, List<SavedSlot> savedSlots)
+    {
+        for (int i = 0; i < inventory.SlotCount; i++)
+        {
+            InventorySlot slot = inventory.GetSlot(i);
+            if (!slot.IsEmpty)
+            {
+                savedSlots.Add(new SavedSlot { index = i, itemId = slot.Item.Id, count = slot.Count });
+            }
+        }
+    }
+
+    // Puts each saved stack back into the exact slot it was saved from.
+    private void ReadSlots(List<SavedSlot> savedSlots, Inventory inventory)
+    {
+        foreach (SavedSlot saved in savedSlots)
+        {
+            ItemData item = FindItem(saved.itemId);
+            if (item != null && saved.index >= 0 && saved.index < inventory.SlotCount)
+            {
+                inventory.SetSlot(saved.index, item, Mathf.Min(saved.count, item.MaxStack));
+            }
+        }
+    }
+
+    private ItemData FindItem(string id)
+    {
+        ItemData item = itemDatabase.FindById(id);
+        if (item == null)
+        {
+            // E.g. the item asset was renamed or removed from the database.
+            Debug.LogWarning($"Saved item '{id}' isn't in the Item Database, skipping it.");
+        }
+        return item;
     }
 
     // Right-click the component's ⋮ menu to use these while testing. They work outside Play mode too.

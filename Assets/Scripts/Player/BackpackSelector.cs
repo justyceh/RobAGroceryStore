@@ -3,10 +3,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
-// Chooses which backpack slot is selected and uses the item in it.
+// Chooses which hotbar slot is selected and uses the item in it.
 // Keyboard: 1-8 jump to a slot, the scroll wheel cycles, F uses.
 // Controller: D-pad left/right or L1/R1 (LB/RB) cycle, right trigger uses.
-// Loot can't be used (it's for selling). Tools get used up; their effects come in a later step.
+// Loot can't be used (it's for selling). Using a tool uses up one from its stack; the
+// effects themselves come in a later step.
 [RequireComponent(typeof(PlayerLoot))]
 public class BackpackSelector : MonoBehaviour
 {
@@ -29,7 +30,7 @@ public class BackpackSelector : MonoBehaviour
     public event Action<int> SelectionChanged;
 
     private PlayerLoot playerLoot;
-    private Backpack backpack;
+    private Inventory hotbar;
 
     private void Awake()
     {
@@ -52,10 +53,10 @@ public class BackpackSelector : MonoBehaviour
         useAction.action.Disable();
     }
 
-    // Start, not Awake: GameSession creates the backpack in its own Awake.
+    // Start, not Awake: GameSession creates the hotbar in its own Awake.
     private void Start()
     {
-        backpack = GameSession.Instance.Backpack;
+        hotbar = GameSession.Instance.Hotbar;
     }
 
     private void Update()
@@ -74,13 +75,13 @@ public class BackpackSelector : MonoBehaviour
         if (nextAction.action.WasPressedThisFrame())
         {
             // % (remainder) wraps around: after the last slot comes the first.
-            Select((SelectedIndex + 1) % backpack.Capacity);
+            Select((SelectedIndex + 1) % hotbar.SlotCount);
         }
 
         if (previousAction.action.WasPressedThisFrame())
         {
-            // Adding Capacity before % keeps the result positive when going left from slot 0.
-            Select((SelectedIndex - 1 + backpack.Capacity) % backpack.Capacity);
+            // Adding SlotCount before % keeps the result positive when going left from slot 0.
+            Select((SelectedIndex - 1 + hotbar.SlotCount) % hotbar.SlotCount);
         }
 
         if (useAction.action.WasPressedThisFrame())
@@ -91,7 +92,7 @@ public class BackpackSelector : MonoBehaviour
 
     private void Select(int index)
     {
-        if (index < 0 || index >= backpack.Capacity || index == SelectedIndex)
+        if (index < 0 || index >= hotbar.SlotCount || index == SelectedIndex)
         {
             return;
         }
@@ -103,12 +104,13 @@ public class BackpackSelector : MonoBehaviour
     private void UseSelected()
     {
         // Empty slot: nothing to use.
-        if (SelectedIndex >= backpack.Items.Count)
+        InventorySlot slot = hotbar.GetSlot(SelectedIndex);
+        if (slot.IsEmpty)
         {
             return;
         }
 
-        ItemData item = backpack.Items[SelectedIndex];
+        ItemData item = slot.Item;
         if (item.Kind != ItemData.ItemKind.Tool)
         {
             Debug.Log($"{item.DisplayName} is loot. Sell it at the shop instead.");
@@ -117,7 +119,9 @@ public class BackpackSelector : MonoBehaviour
 
         // The actual effect (speed boost etc.) gets added in step B2.
         Debug.Log($"Used {item.DisplayName}!");
-        backpack.RemoveAt(SelectedIndex);
+
+        // Takes one off the stack. The slot only empties when the last one is used.
+        hotbar.RemoveOneAt(SelectedIndex);
         playerLoot.ForgetItem(item);
     }
 }

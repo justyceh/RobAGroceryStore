@@ -15,4 +15,5 @@ MonoBehaviour:
   displayName: Cereal
   kind: 0
   sellValue: 2
+  maxStack: 5
   color: {r: 0.07786467, g: 0.24248093, b: 0.7987421, a: 1}

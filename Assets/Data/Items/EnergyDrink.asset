@@ -15,4 +15,5 @@ MonoBehaviour:
   displayName: Redbull
   kind: 1
   sellValue: 30
+  maxStack: 3
   color: {r: 0, g: 1, b: 0, a: 1}

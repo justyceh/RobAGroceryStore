@@ -50,6 +50,14 @@ public class PlayerInteract : MonoBehaviour
     private void OnDisable()
     {
         interactAction.action.Disable();
+
+        // Switched off (inventory screen opened, game over): don't leave an item glowing yellow.
+        if (currentTarget != null)
+        {
+            currentTarget.SetHighlighted(false);
+        }
+        currentTarget = null;
+        lastCollider = null;
     }
 
     private void Update()

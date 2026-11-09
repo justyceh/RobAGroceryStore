@@ -1,16 +1,12 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// The main menu: shows your saved progress and has the Play and Quit buttons.
+// The main menu's buttons. Money and items aren't shown here; they'll live in the Shop screen.
 // The buttons call Play() and Quit() through their On Click events, set up in the Inspector.
 public class MainMenuUI : MonoBehaviour
 {
     [Tooltip("The scene the Play button loads. It must be in File > Build Profiles > Scene List.")]
     [SerializeField] private string firstLevelScene = "Level_01";
-
-    [Tooltip("Text that shows your saved money and what's in your backpack.")]
-    [SerializeField] private TMP_Text progressText;
 
     private void Start()
     {
@@ -18,12 +14,6 @@ public class MainMenuUI : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 1f;
-
-        // GameSession loaded the save file in its Awake, which always runs before this Start.
-        GameSession session = GameSession.Instance;
-        Backpack backpack = session.Backpack;
-        progressText.text = $"Money: ${session.Money}\n" +
-                            $"Backpack: {backpack.Items.Count}/{backpack.Capacity} items (worth ${backpack.TotalValue})";
     }
 
     // Called by the Play button.

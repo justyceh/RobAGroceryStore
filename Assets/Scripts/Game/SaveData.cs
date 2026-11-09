@@ -9,5 +9,21 @@ using System.Collections.Generic;
 public class SaveData
 {
     public int money;
+
+    // One entry per non-empty slot.
+    public List<SavedSlot> hotbar = new List<SavedSlot>();
+    public List<SavedSlot> backpack = new List<SavedSlot>();
+
+    // The old save format (one ID per item, no stacks). Only read, so saves made before
+    // stacking still load; new saves leave it empty.
     public List<string> backpackItemIds = new List<string>();
+}
+
+// One saved stack: which slot it was in, which item, and how many.
+[Serializable]
+public class SavedSlot
+{
+    public int index;
+    public string itemId;
+    public int count;
 }

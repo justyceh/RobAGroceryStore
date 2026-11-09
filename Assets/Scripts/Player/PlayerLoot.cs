@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Connects stealing in this level to the backpack that carries over between levels.
-// It puts stolen items into the backpack, remembers which ones were taken THIS level
+// Connects stealing in this level to the hotbar and backpack that carry over between levels.
+// It puts stolen items into the hotbar (or the backpack once the hotbar is full), remembers which ones were taken THIS level
 // (so they can be taken back if you're caught), and tells guards when a theft happens.
 public class PlayerLoot : MonoBehaviour
 {
@@ -19,14 +19,17 @@ public class PlayerLoot : MonoBehaviour
 
     private readonly List<ItemData> stolenThisLevel = new List<ItemData>();
 
-    // The backpack lives in GameSession, not here, because this Player is destroyed when the level changes.
-    private Backpack Backpack => GameSession.Instance.Backpack;
+    // These live in GameSession, not here, because this Player is destroyed when the level changes.
+    private Inventory Hotbar => GameSession.Instance.Hotbar;
+    private Inventory Backpack => GameSession.Instance.Backpack;
 
-    // Returns true if the item went into the backpack. PlayerInteract only removes the item
-    // from the scene when this succeeds.
+    // Returns true if the item fit somewhere: the hotbar first, then the backpack.
+    // PlayerInteract only removes the item from the scene when this succeeds.
     public bool TrySteal(ItemData item)
     {
-        if (!Backpack.TryAdd(item))
+        // "||" stops at the first true, so the backpack is only tried if the hotbar had no room.
+        bool added = Hotbar.TryAdd(item) || Backpack.TryAdd(item);
+        if (!added)
         {
             BackpackFull?.Invoke();
             return false;
@@ -34,7 +37,7 @@ public class PlayerLoot : MonoBehaviour
 
         stolenThisLevel.Add(item);
         LootCount++;
-        Debug.Log($"Stole {item.DisplayName} (${item.SellValue}). Backpack: {Backpack.Items.Count}/{Backpack.Capacity}");
+        Debug.Log($"Stole {item.DisplayName} (${item.SellValue}).");
 
         // "?." only calls Invoke if at least one script has subscribed, otherwise the event is null.
         ItemStolen?.Invoke();
@@ -49,12 +52,18 @@ public class PlayerLoot : MonoBehaviour
     }
 
     // Called when you're caught: hand back everything grabbed in this level.
-    // Items you brought in from earlier levels stay in the backpack.
+    // Items you brought in from earlier levels stay. With stacks, this takes back one item per
+    // theft, so Cereal x5 where 2 were stolen this level goes back to Cereal x3.
     public void LoseThisLevelsLoot()
     {
         foreach (ItemData item in stolenThisLevel)
         {
-            Backpack.Remove(item);
+            // Take it from the hotbar if it's there, otherwise from the backpack
+            // (it may have been moved between them since it was stolen).
+            if (!Hotbar.RemoveOne(item))
+            {
+                Backpack.RemoveOne(item);
+            }
         }
         stolenThisLevel.Clear();
         LootCount = 0;

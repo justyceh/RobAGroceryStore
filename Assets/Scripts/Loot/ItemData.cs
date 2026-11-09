@@ -23,6 +23,9 @@ public class ItemData : ScriptableObject
     [Tooltip("How much money the shop pays for this item.")]
     [SerializeField] private int sellValue = 10;
 
+    [Tooltip("How many of this item fit in one slot. 1 = doesn't stack (e.g. a Cash Box).")]
+    [SerializeField] private int maxStack = 5;
+
     [Tooltip("Color of this item in the store, so different item types are easy to tell apart.")]
     [SerializeField] private Color color = Color.green;
 
@@ -35,5 +38,8 @@ public class ItemData : ScriptableObject
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public ItemKind Kind => kind;
     public int SellValue => sellValue;
+
+    // Mathf.Max guards against 0 or a negative number typed in the Inspector.
+    public int MaxStack => Mathf.Max(1, maxStack);
     public Color Color => color;
 }

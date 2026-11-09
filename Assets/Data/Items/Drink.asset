@@ -15,4 +15,5 @@ MonoBehaviour:
   displayName: Drink
   kind: 0
   sellValue: 5
+  maxStack: 10
   color: {r: 0.8448562, g: 0.118211135, b: 0.8742138, a: 1}
