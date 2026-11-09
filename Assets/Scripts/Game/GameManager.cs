@@ -59,6 +59,13 @@ public class GameManager : MonoBehaviour
 
     public void PlayerEscaped(int lootCount)
     {
+        if (IsGameOver)
+        {
+            return;
+        }
+
+        // Escaping is a safe moment to save: this level's loot is now really yours.
+        GameSession.Instance.SaveGame();
         EndGame(string.Format(winMessage, lootCount), true);
     }
 

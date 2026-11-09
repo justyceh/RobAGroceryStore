@@ -758,6 +758,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   backpackSize: 8
+  itemDatabase: {fileID: 11400000, guid: 70c0ee060e89d0f4e824df24d21e028c, type: 2}
 --- !u!1 &2112901246943213495
 GameObject:
   m_ObjectHideFlags: 0

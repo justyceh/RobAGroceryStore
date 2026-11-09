@@ -26,6 +26,10 @@ public class ItemData : ScriptableObject
     [Tooltip("Color of this item in the store, so different item types are easy to tell apart.")]
     [SerializeField] private Color color = Color.green;
 
+    // The ID written into save files: the asset's file name (e.g. "Pringles").
+    // Renaming an item asset changes its ID, so old saves won't find that item anymore.
+    public string Id => name;
+
     // Read-only from code: only the Inspector should change item definitions.
     // "name" is the asset's file name (e.g. "Pringles"), used when Display Name is left empty.
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
