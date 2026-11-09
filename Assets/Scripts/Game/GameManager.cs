@@ -28,6 +28,13 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameOver { get; private set; }
 
+    private PlayerLoot playerLoot;
+
+    private void Awake()
+    {
+        playerLoot = player.GetComponent<PlayerLoot>();
+    }
+
     private void Start()
     {
         gameOverPanel.SetActive(false);
@@ -38,6 +45,15 @@ public class GameManager : MonoBehaviour
 
     public void PlayerCaught()
     {
+        // Guards keep calling this every frame while touching you, even after a win,
+        // so bail out early. Otherwise you could lose your loot after already escaping.
+        if (IsGameOver)
+        {
+            return;
+        }
+
+        // The penalty for getting caught: only what you grabbed in this level is lost.
+        playerLoot.LoseThisLevelsLoot();
         EndGame(loseMessage, false);
     }
 

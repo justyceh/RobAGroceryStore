@@ -58,10 +58,12 @@ public class PlayerInteract : MonoBehaviour
 
         // The Interact action has a "Hold" interaction in the default asset. WasPressedThisFrame
         // ignores interactions, so a normal tap of E still works.
-        if (currentTarget != null && interactAction.action.WasPressedThisFrame())
+        // Only remove the item from the scene if it actually fit in the backpack.
+        if (currentTarget != null && currentTarget.Item != null
+            && interactAction.action.WasPressedThisFrame()
+            && playerLoot.TrySteal(currentTarget.Item))
         {
             currentTarget.Steal();
-            playerLoot.AddLoot();
             currentTarget = null;
             lastCollider = null;
         }

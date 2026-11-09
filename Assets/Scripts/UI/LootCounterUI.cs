@@ -1,41 +1,41 @@
 using TMPro;
 using UnityEngine;
 
-// Shows the player's loot count on screen, e.g. "Loot: 3".
-// Instead of checking the count every frame, it listens for PlayerLoot's LootChanged event
-// and only updates the text when something was actually stolen.
+// Shows what's in the backpack on screen, e.g. "Backpack: 3/8   $45".
+// Instead of checking every frame, it listens for the backpack's Changed event and only
+// updates the text when something was added or removed.
 public class LootCounterUI : MonoBehaviour
 {
-    [Tooltip("The PlayerLoot component on the Player. Drag the Player object here.")]
-    [SerializeField] private PlayerLoot playerLoot;
-
-    [Tooltip("The TextMeshPro text that displays the count.")]
+    [Tooltip("The TextMeshPro text that displays the backpack.")]
     [SerializeField] private TMP_Text label;
 
-    [Tooltip("Text shown before the number.")]
-    [SerializeField] private string prefix = "Loot: ";
+    [Tooltip("How the text is laid out. {0} = items carried, {1} = backpack size, {2} = total value.")]
+    [SerializeField] private string format = "Backpack: {0}/{1}   ${2}";
 
-    // Subscribe when enabled and unsubscribe when disabled, like adding an event listener
-    // in a useEffect and removing it in the cleanup. Forgetting to unsubscribe can cause
-    // errors if this UI is destroyed while the player still exists.
-    private void OnEnable()
-    {
-        playerLoot.LootChanged += UpdateLabel;
-    }
+    private Backpack backpack;
 
-    private void OnDisable()
-    {
-        playerLoot.LootChanged -= UpdateLabel;
-    }
-
+    // Start, not OnEnable: GameSession sets up the backpack in its Awake, and every Awake
+    // is guaranteed to have run before any Start.
     private void Start()
     {
-        // Show the starting count (0) right away instead of the placeholder text.
-        UpdateLabel(playerLoot.LootCount);
+        backpack = GameSession.Instance.Backpack;
+        backpack.Changed += Refresh;
+        Refresh();
     }
 
-    private void UpdateLabel(int count)
+    // The backpack outlives this level but this UI doesn't. If we didn't unsubscribe here,
+    // the backpack would keep trying to update a label that's been destroyed, a classic
+    // "listener never removed" bug.
+    private void OnDestroy()
     {
-        label.text = prefix + count;
+        if (backpack != null)
+        {
+            backpack.Changed -= Refresh;
+        }
+    }
+
+    private void Refresh()
+    {
+        label.text = string.Format(format, backpack.Items.Count, backpack.Capacity, backpack.TotalValue);
     }
 }
