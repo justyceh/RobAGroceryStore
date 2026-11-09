@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
     [Tooltip("The Next Level button on the panel. Only shown after a win, and only if another level comes after this one in Build Profiles.")]
     [SerializeField] private GameObject nextLevelButton;
 
+    [Tooltip("The scene the Main Menu button loads. It must be in File > Build Profiles > Scene List.")]
+    [SerializeField] private string mainMenuScene = "MainMenu";
+
     [Tooltip("The Player. All of its scripts are switched off when the game ends so you can't keep playing behind the message.")]
     [SerializeField] private GameObject player;
 
@@ -54,6 +57,9 @@ public class GameManager : MonoBehaviour
 
         // The penalty for getting caught: only what you grabbed in this level is lost.
         playerLoot.LoseThisLevelsLoot();
+
+        // Save now too, so tools you used up this level stay used up, the same as after escaping.
+        GameSession.Instance.SaveGame();
         EndGame(loseMessage, false);
     }
 
@@ -106,6 +112,13 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    // Called by the Main Menu button's On Click event.
+    public void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(mainMenuScene);
     }
 
     // Called by the Play Again button's On Click event (set up in the Inspector, not in code).
