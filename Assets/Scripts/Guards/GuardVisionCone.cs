@@ -15,9 +15,12 @@ public class GuardVisionCone : MonoBehaviour
 
     private Mesh mesh;
     private Vector3[] vertices;
+    private MeshRenderer meshRenderer;
 
     private void Awake()
     {
+        meshRenderer = GetComponent<MeshRenderer>();
+
         // A Mesh is the raw shape data the renderer draws: a list of corner points (vertices)
         // plus triangles that connect them. We build a "fan": one point at the guard,
         // and a row of points along the cone's far edge.
@@ -43,6 +46,13 @@ public class GuardVisionCone : MonoBehaviour
     // turned before we redraw its cone. Otherwise the cone would lag one frame behind.
     private void LateUpdate()
     {
+        // A blind guard sees nothing, so hide the cone. That also shows the player it's safe.
+        meshRenderer.enabled = !sight.IsBlind;
+        if (sight.IsBlind)
+        {
+            return;
+        }
+
         float halfAngle = sight.ViewAngle / 2f;
         Vector3 eyes = sight.EyePosition;
 

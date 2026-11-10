@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Answers one question for the guard: "Can I see the player right now?"
@@ -31,8 +32,41 @@ public class GuardSight : MonoBehaviour
         target = player;
     }
 
+    // Blindness (e.g. an egg to the face). While blind, CanSeePlayer is always false.
+    // Security cameras use GuardSight too, so an egg on a camera lens blinds it as well.
+    private float blindTimeLeft;
+    public bool IsBlind => blindTimeLeft > 0f;
+
+    // Fired the moment this guard goes blind (not when an already-blind guard gets hit again).
+    // GuardAI listens so a chasing guard can lose you right away.
+    public event Action Blinded;
+
+    public void Blind(float duration)
+    {
+        bool wasBlind = IsBlind;
+        blindTimeLeft = Mathf.Max(blindTimeLeft, duration);
+        if (!wasBlind)
+        {
+            Debug.Log($"{name} is blinded for {duration:0.#}s!");
+            Blinded?.Invoke();
+        }
+    }
+
+    private void Update()
+    {
+        if (blindTimeLeft > 0f)
+        {
+            blindTimeLeft -= Time.deltaTime;
+        }
+    }
+
     public bool CanSeePlayer()
     {
+        if (IsBlind)
+        {
+            return false;
+        }
+
         Vector3 eyes = EyePosition;
         Vector3 toPlayer = target.position - eyes;
 
@@ -59,6 +93,12 @@ public class GuardSight : MonoBehaviour
             return hit.transform.IsChildOf(target);
         }
         return true;
+    }
+
+    [ContextMenu("Debug: Blind (5s)")]
+    private void DebugBlind()
+    {
+        Blind(5f);
     }
 
     // Editor-only: draws the cone's two edges in cyan when the guard is selected.

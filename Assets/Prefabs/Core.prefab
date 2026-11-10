@@ -124,6 +124,8 @@ GameObject:
   - component: {fileID: 1570883946500910713}
   - component: {fileID: 7175767742176847310}
   - component: {fileID: 4065590281448623169}
+  - component: {fileID: 8793054265465135168}
+  - component: {fileID: 785344516937789104}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -146,6 +148,7 @@ Transform:
   m_Children:
   - {fileID: 2426302769514737094}
   - {fileID: 5855788898663833897}
+  - {fileID: 3655343776403679472}
   m_Father: {fileID: 2085705009840127266}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8350594249678727018
@@ -369,6 +372,39 @@ MonoBehaviour:
   dashDistance: 5
   dashDuration: 0.15
   cooldown: 1
+--- !u!114 &8793054265465135168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96661233059267166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 510c14181a8ace4409160b24abaa6fb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drunkVolume: {fileID: 8288988820991579766}
+  fadeInTime: 1.5
+  fadeOutTime: 3
+  wobbleSpeed: 1.2
+  wobbleAmount: 0.2
+  distortionPulse: 0.15
+--- !u!114 &785344516937789104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96661233059267166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7191b968e678641ab4e541eff3b259, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraTarget: {fileID: 2426302769514737094}
+  throwOffset: {x: 0.25, y: -0.2, z: 0.7}
+  kickOffset: {x: 0, y: -0.7, z: 0.8}
 --- !u!1 &171194655795029868
 GameObject:
   m_ObjectHideFlags: 0
@@ -1168,6 +1204,55 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &4014473937640267642
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3655343776403679472}
+  - component: {fileID: 8288988820991579766}
+  m_Layer: 0
+  m_Name: DrunkVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3655343776403679472
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4014473937640267642}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1090975746585345154}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8288988820991579766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4014473937640267642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 1
+  priority: 10
+  blendDistance: 0
+  weight: 0
+  sharedProfile: {fileID: 11400000, guid: d38835e4f3b24134a904e31df4708865, type: 2}
 --- !u!1 &4217113549223925257
 GameObject:
   m_ObjectHideFlags: 0
@@ -1197,7 +1282,7 @@ Transform:
   m_GameObject: {fileID: 4217113549223925257}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 4.1, z: -17}
+  m_LocalPosition: {x: 0.5, y: 3.1, z: -17}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

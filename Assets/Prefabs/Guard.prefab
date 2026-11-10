@@ -120,6 +120,8 @@ GameObject:
   - component: {fileID: 4512798292121006797}
   - component: {fileID: 8075912074835357112}
   - component: {fileID: 4806190820171746647}
+  - component: {fileID: 5242776727421575549}
+  - component: {fileID: 5827348936733061125}
   m_Layer: 6
   m_Name: Guard
   m_TagString: Untagged
@@ -332,6 +334,40 @@ MonoBehaviour:
   searchSpeed: 3.5
   lookAroundTime: 4
   turnSpeed: 90
+--- !u!114 &5242776727421575549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915741844093048349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6004bb0f244c00942b516ef7eec39e93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  body: {fileID: 0}
+  fallAngle: 80
+  fallTime: 0.25
+  feetHeight: -1
+  knockbackTime: 0.3
+--- !u!114 &5827348936733061125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915741844093048349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6004bb0f244c00942b516ef7eec39e93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  body: {fileID: 29384345307862260}
+  fallAngle: 80
+  fallTime: 0.25
+  feetHeight: -1
+  knockbackTime: 0.3
 --- !u!1001 &6656632959068429603
 PrefabInstance:
   m_ObjectHideFlags: 0

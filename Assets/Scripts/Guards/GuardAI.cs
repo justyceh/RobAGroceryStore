@@ -17,15 +17,19 @@ using UnityEngine;
 //     ^                                ^                                    |
 //     |                                +-------(sees Wanted player)---------+
 //     +-----------------------(search finished)-----------------------------+
+//
+// Any state --(banana / soccer ball)--> Stunned --(gets up)--> Search (if you're Wanted) or Wander
+// Chase --(egg to the face, goes blind)--> Search where it last saw you
 [RequireComponent(typeof(GuardWander), typeof(GuardChase), typeof(GuardCatch))]
-[RequireComponent(typeof(GuardSight), typeof(GuardSearch))]
+[RequireComponent(typeof(GuardSight), typeof(GuardSearch), typeof(GuardStunned))]
 public class GuardAI : MonoBehaviour
 {
     public enum State
     {
         Wander,
         Chase,
-        Search
+        Search,
+        Stunned
     }
 
     [Tooltip("What the guard does when the game starts.")]
@@ -48,6 +52,7 @@ public class GuardAI : MonoBehaviour
     private GuardSearch search;
     private GuardCatch catcher;
     private GuardSight sight;
+    private GuardStunned stunned;
 
     private Transform player;
     private PlayerLoot playerLoot;
@@ -63,6 +68,7 @@ public class GuardAI : MonoBehaviour
         search = GetComponent<GuardSearch>();
         catcher = GetComponent<GuardCatch>();
         sight = GetComponent<GuardSight>();
+        stunned = GetComponent<GuardStunned>();
 
         // Look these up once here, never in Update. FindWithTag searches the scene for the object
         // tagged "Player"; FindAnyObjectByType finds the one GameManager.
@@ -87,12 +93,14 @@ public class GuardAI : MonoBehaviour
     private void OnEnable()
     {
         playerLoot.ItemStolen += OnItemStolen;
+        sight.Blinded += OnBlinded;
         allGuards.Add(this);
     }
 
     private void OnDisable()
     {
         playerLoot.ItemStolen -= OnItemStolen;
+        sight.Blinded -= OnBlinded;
         allGuards.Remove(this);
     }
 
@@ -129,6 +137,53 @@ public class GuardAI : MonoBehaviour
                     SetState(State.Wander);
                 }
                 break;
+
+            case State.Stunned:
+                if (stunned.IsFinished)
+                {
+                    GetBackUp();
+                }
+                break;
+        }
+    }
+
+    // Called by things that knock the guard over (banana peel, soccer ball).
+    // "knockback" is how far, and which way, to shove the guard, in meters.
+    public void KnockDown(float duration, Vector3 knockback)
+    {
+        stunned.Setup(duration, knockback);
+
+        // Turning it off first means OnEnable runs again, so a second hit restarts the stun.
+        stunned.enabled = false;
+        SetState(State.Stunned);
+    }
+
+    private void GetBackUp()
+    {
+        if (playerWanted.IsWanted && sight.CanSeePlayer())
+        {
+            StartChase();
+        }
+        else if (playerWanted.IsWanted)
+        {
+            // Dazed: look around right here for whoever knocked it over.
+            search.SetSearchPoint(transform.position);
+            SetState(State.Search);
+        }
+        else
+        {
+            SetState(State.Wander);
+        }
+    }
+
+    // Egg to the face. A chasing guard can't follow what it can't see, so it gives up right away
+    // and stumbles over to where it last saw you (it still can't see anything until the blindness wears off).
+    private void OnBlinded()
+    {
+        if (CurrentState == State.Chase)
+        {
+            search.SetSearchPoint(lastKnownPosition);
+            SetState(State.Search);
         }
     }
 
@@ -180,7 +235,8 @@ public class GuardAI : MonoBehaviour
     // Once there, the normal rules apply: seeing the Wanted player starts a chase.
     public void HearRadio(Vector3 position)
     {
-        if (CurrentState == State.Chase)
+        // Busy chasing, or lying on the floor: ignore the radio.
+        if (CurrentState == State.Chase || CurrentState == State.Stunned)
         {
             return;
         }
@@ -203,6 +259,8 @@ public class GuardAI : MonoBehaviour
     {
         CurrentState = newState;
 
+        // Stunned goes first: switching it off un-freezes the NavMeshAgent before the next behaviour starts walking.
+        stunned.enabled = newState == State.Stunned;
         wander.enabled = newState == State.Wander;
         chase.enabled = newState == State.Chase;
         search.enabled = newState == State.Search;
@@ -217,6 +275,12 @@ public class GuardAI : MonoBehaviour
     private void DebugStartChasing()
     {
         StartChase();
+    }
+
+    [ContextMenu("Debug: Knock Down (3s)")]
+    private void DebugKnockDown()
+    {
+        KnockDown(3f, -transform.forward * 1.5f);
     }
 
     [ContextMenu("Debug: Start Wandering")]
