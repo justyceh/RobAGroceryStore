@@ -119,13 +119,20 @@ public class Inventory
     // Removes one item from a specific slot's stack (e.g. using one Red Bull out of three).
     public void RemoveOneAt(int index)
     {
+        RemoveFromSlot(index, 1);
+    }
+
+    // Removes some items from a specific slot's stack (e.g. selling 3 Pringles at the shop).
+    // Asking for more than the stack has just empties the slot.
+    public void RemoveFromSlot(int index, int amount)
+    {
         InventorySlot slot = slots[index];
-        if (slot.IsEmpty)
+        if (slot.IsEmpty || amount <= 0)
         {
             return;
         }
 
-        slot.Set(slot.Item, slot.Count - 1);
+        slot.Set(slot.Item, slot.Count - amount);
         Changed?.Invoke();
     }
 

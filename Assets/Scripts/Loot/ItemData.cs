@@ -23,11 +23,17 @@ public class ItemData : ScriptableObject
     [Tooltip("How much money the shop pays for this item.")]
     [SerializeField] private int sellValue = 10;
 
+    [Tooltip("How much money the shop charges to buy this item. Only matters for items in the Shop's Items For Sale list.")]
+    [SerializeField] private int buyPrice = 25;
+
     [Tooltip("How many of this item fit in one slot. 1 = doesn't stack (e.g. a Cash Box).")]
     [SerializeField] private int maxStack = 5;
 
     [Tooltip("Color of this item in the store, so different item types are easy to tell apart.")]
     [SerializeField] private Color color = Color.green;
+
+    [Tooltip("What happens when you use this item (Tools only). Drag an effect asset here, e.g. RedBullBuff. Leave empty for loot.")]
+    [SerializeField] private ItemEffect effect;
 
     // The ID written into save files: the asset's file name (e.g. "Pringles").
     // Renaming an item asset changes its ID, so old saves won't find that item anymore.
@@ -39,7 +45,11 @@ public class ItemData : ScriptableObject
     public ItemKind Kind => kind;
     public int SellValue => sellValue;
 
+    // Mathf.Max so a negative number typed in the Inspector can't give the player money for buying.
+    public int BuyPrice => Mathf.Max(0, buyPrice);
+
     // Mathf.Max guards against 0 or a negative number typed in the Inspector.
     public int MaxStack => Mathf.Max(1, maxStack);
     public Color Color => color;
+    public ItemEffect Effect => effect;
 }

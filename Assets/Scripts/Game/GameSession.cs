@@ -27,7 +27,7 @@ public class GameSession : MonoBehaviour
     // Extra storage. Items here can be carried and sold, but must be moved to the hotbar to be used.
     public Inventory Backpack { get; private set; }
 
-    // Money earned at the shop. Saved with the items; the shop will change it.
+    // Money earned at the shop. Saved with the items. Only changed through AddMoney / TrySpendMoney.
     public int Money { get; private set; }
 
     // Awake runs before any Start, so scripts should use GameSession.Instance from Start onward, not Awake.
@@ -58,8 +58,30 @@ public class GameSession : MonoBehaviour
         }
     }
 
-    // Saving only happens at safe moments (when a level ends), never mid-level.
-    // Otherwise you could steal, quit before getting caught, and keep the loot.
+    // Called by the shop when you sell something.
+    public void AddMoney(int amount)
+    {
+        if (amount > 0)
+        {
+            Money += amount;
+        }
+    }
+
+    // Called by the shop when you buy something. Returns false (and spends nothing)
+    // if you can't afford it, so money can never go below 0.
+    public bool TrySpendMoney(int amount)
+    {
+        if (amount < 0 || amount > Money)
+        {
+            return false;
+        }
+
+        Money -= amount;
+        return true;
+    }
+
+    // Saving only happens at safe moments (when a level ends, or after a shop purchase or sale),
+    // never mid-level. Otherwise you could steal, quit before getting caught, and keep the loot.
     public void SaveGame()
     {
         SaveData data = new SaveData();

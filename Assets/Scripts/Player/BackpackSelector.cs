@@ -6,8 +6,7 @@ using UnityEngine.InputSystem.Controls;
 // Chooses which hotbar slot is selected and uses the item in it.
 // Keyboard: 1-8 jump to a slot, the scroll wheel cycles, F uses.
 // Controller: D-pad left/right or L1/R1 (LB/RB) cycle, right trigger uses.
-// Loot can't be used (it's for selling). Using a tool uses up one from its stack; the
-// effects themselves come in a later step.
+// Loot can't be used (it's for selling). Using a tool runs its ItemEffect and uses up one from its stack.
 [RequireComponent(typeof(PlayerLoot))]
 public class BackpackSelector : MonoBehaviour
 {
@@ -117,7 +116,19 @@ public class BackpackSelector : MonoBehaviour
             return;
         }
 
-        // The actual effect (speed boost etc.) gets added in step B2.
+        // Tools whose effect isn't built yet stay in the slot instead of being wasted.
+        if (item.Effect == null)
+        {
+            Debug.LogWarning($"{item.DisplayName} has no Effect set on its Item Data asset yet.");
+            return;
+        }
+
+        // The effect decides if it worked (e.g. a buff needs PlayerBuffs on the Player).
+        // If it didn't, keep the item.
+        if (!item.Effect.Use(gameObject))
+        {
+            return;
+        }
         Debug.Log($"Used {item.DisplayName}!");
 
         // Takes one off the stack. The slot only empties when the last one is used.

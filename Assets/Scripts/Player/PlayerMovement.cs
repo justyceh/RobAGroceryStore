@@ -31,13 +31,20 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
 
+    // Optional: if the Player has PlayerBuffs, Red Bull / Jordans boosts are applied. Without it, no boosts.
+    private PlayerBuffs buffs;
+
     // CharacterController doesn't do gravity for us (it isn't a Rigidbody), so we track fall speed ourselves.
     private float verticalVelocity;
 
+    // The world direction WASD is pushing this frame (length 0 to 1). PlayerDash reads it to know which way to dash.
+    public Vector3 MoveDirection { get; private set; }
+
     private void Awake()
     {
-        // Cache the component once instead of looking it up every frame.
+        // Cache the components once instead of looking them up every frame.
         controller = GetComponent<CharacterController>();
+        TryGetComponent(out buffs);
     }
 
     // Input actions only report values while enabled. OnEnable/OnDisable run when this
@@ -66,6 +73,11 @@ public class PlayerMovement : MonoBehaviour
         // ClampMagnitude stops diagonals (W+D) from being faster than straight lines.
         Vector3 direction = transform.right * input.x + transform.forward * input.y;
         direction = Vector3.ClampMagnitude(direction, 1f);
+        MoveDirection = direction;
+
+        // 1 when no buff is active, e.g. 1.5 while Red Bull is active.
+        float speedMultiplier = buffs != null ? buffs.SpeedMultiplier : 1f;
+        float jumpMultiplier = buffs != null ? buffs.JumpMultiplier : 1f;
 
         // A small downward push while grounded keeps isGrounded reliable on slopes and steps.
         if (controller.isGrounded && verticalVelocity < 0f)
@@ -79,12 +91,12 @@ public class PlayerMovement : MonoBehaviour
         {
             // Physics formula: the upward speed needed to reach jumpHeight under this gravity.
             // Tuning height in meters is easier to reason about than tuning a raw launch speed.
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            verticalVelocity = Mathf.Sqrt(jumpHeight * jumpMultiplier * -2f * gravity);
         }
         verticalVelocity += gravity * Time.deltaTime;
 
         // IsPressed is true every frame the key is held, unlike WasPressedThisFrame.
-        float speed = sprintAction.action.IsPressed() ? sprintSpeed : moveSpeed;
+        float speed = (sprintAction.action.IsPressed() ? sprintSpeed : moveSpeed) * speedMultiplier;
 
         Vector3 velocity = direction * speed;
         velocity.y = verticalVelocity;
